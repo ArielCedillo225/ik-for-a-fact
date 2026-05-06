@@ -15,20 +15,28 @@ interface StatusOption {
   icon: React.ReactNode;
 }
 
+// Sincronizado con la tabla public.facts
 type Fact = {
   id: number;
-  fact: string;
-  category: string;
-  subcategory?: string;
-  created_by: string;
-  tags?: string[];
-  status: FactStatus;
-  intensity: number;
-  learning_date: string;
+  created_at: string;
+  category: string | null;
+  sub_category: string | null;
+  fact: string | null;
+  original_author: string | null;
+  date_learned: string | null;
+  link: string | null;
+  status: FactStatus | string | null;
+  created_by: string | null;
+  importance: number | null; // smallint
+  tag_1: string | null;
+  tag_2: string | null;
+  tag_3: string | null;
 };
 
 export default function FactCard({ fact }: { fact: Fact }) {
-  const [status, setStatus] = useState<FactStatus>(fact.status);
+  const [status, setStatus] = useState<FactStatus>(
+    (fact.status as FactStatus) || "interesting",
+  );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -98,32 +106,35 @@ export default function FactCard({ fact }: { fact: Fact }) {
       <div className="flex justify-between items-start mb-4">
         <div className="flex flex-col gap-2">
           <span className="self-start text-[10px] font-black uppercase tracking-tighter bg-slate-900 text-white px-2 py-0.5 rounded">
-            {fact.category}
+            {fact.category || "General"}
           </span>
           <div className="flex gap-1">
-            {fact.tags?.slice(0, 3).map((tag, i) => (
-              <span
-                key={i}
-                className="text-[9px] bg-white/10 border border-white/20 px-1.5 py-0.5 rounded uppercase font-mono"
-              >
-                {tag}
-              </span>
-            ))}
+            {[fact.tag_1, fact.tag_2, fact.tag_3].map(
+              (tag, i) =>
+                tag && (
+                  <span
+                    key={i}
+                    className="text-[9px] bg-white/10 border border-white/20 px-1.5 py-0.5 rounded uppercase font-mono"
+                  >
+                    {tag}
+                  </span>
+                ),
+            )}
           </div>
         </div>
         <div className="text-right">
-          <span className="block text-[10px] font-mono opacity-50 mb-1 tracking-widest">
-            {fact.learning_date}
+          <span className="block text-[10px] font-mono opacity-50 mb-1 tracking-widest lowercase">
+            {fact.date_learned || "no-date"}
           </span>
           <div className="flex items-center gap-2 justify-end">
             <span className="text-[9px] font-mono uppercase opacity-40">
-              Interestingness
+              Importance
             </span>
             <div className="flex gap-0.5">
               {[...Array(5)].map((_, i) => (
                 <div
                   key={i}
-                  className={`w-1.5 h-3 rounded-full border border-white/20 ${i < fact.intensity ? "bg-white" : "bg-white/10"}`}
+                  className={`w-1.5 h-3 rounded-full border border-white/20 ${i < (fact.importance || 0) ? "bg-white" : "bg-white/10"}`}
                 ></div>
               ))}
             </div>
@@ -131,15 +142,32 @@ export default function FactCard({ fact }: { fact: Fact }) {
         </div>
       </div>
 
-      <p className="text-xl leading-snug mb-8">{fact.fact}</p>
+      <div className="mb-6">
+        <p className="text-xl leading-snug mb-2">{fact.fact}</p>
+        {fact.sub_category && (
+          <span className="text-[10px] opacity-40 font-mono italic">
+            — {fact.sub_category}
+          </span>
+        )}
+      </div>
 
       <div className="flex items-center justify-between pt-4 border-t border-black/10">
-        <div className="flex items-center gap-3">
-          <div
-            className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs ${isAriel ? "bg-blue-500 text-white" : "bg-pink-500 text-white"}`}
-          >
-            {fact.created_by[0]}
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs ${isAriel ? "bg-blue-500 text-white" : "bg-pink-500 text-white"}`}
+            >
+              {fact.created_by ? fact.created_by[0] : "?"}
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80">
+              {fact.created_by}
+            </span>
           </div>
+          {fact.original_author && (
+            <span className="text-[9px] opacity-40 italic ml-11">
+              Source: {fact.original_author}
+            </span>
+          )}
         </div>
 
         <div className="relative" ref={menuRef}>
@@ -151,13 +179,14 @@ export default function FactCard({ fact }: { fact: Fact }) {
           </button>
 
           {isMenuOpen && (
-            <div className="absolute left-full top-0 ml-2 grid grid-cols-1 gap-1 bg-slate-900 border border-white/10 p-1.5 rounded-xl shadow-2xl z-10 w-32 animate-in fade-in slide-in-from-left-2 duration-200">
+            <div className="absolute left-full top-0 ml-2 grid grid-cols-1 gap-1 bg-slate-900 border border-white/10 p-1.5 rounded-xl shadow-2xl z-20 w-32 animate-in fade-in slide-in-from-left-2 duration-200">
               {statusOptions.map((opt) => (
                 <button
                   key={opt.id}
                   onClick={() => {
                     setStatus(opt.id);
                     setIsMenuOpen(false);
+                    // Aquí iría la llamada al backend para actualizar el status
                   }}
                   className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors
                     ${status === opt.id ? "bg-white/20 text-white" : "text-white/40 hover:bg-white/10 hover:text-white"}`}
@@ -170,6 +199,24 @@ export default function FactCard({ fact }: { fact: Fact }) {
           )}
         </div>
       </div>
+
+      {fact.link && (
+        <a
+          href={fact.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute top-2 right-2 opacity-0 hover:opacity-100 transition-opacity"
+        >
+          <svg
+            className="w-3 h-3 text-white/20"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
+      )}
     </div>
   );
 }
