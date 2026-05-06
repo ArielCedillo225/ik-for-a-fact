@@ -1,32 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  --color-ariel-bg: rgba(59, 130, 246, 0.15);
+  --color-ariel-bg: #1e293b;
   --color-ariel-border: #3b82f6;
   --color-ariel-text: #dbeafe;
 
-  --color-pamela-bg: rgba(236, 72, 153, 0.12);
+  --color-pamela-bg: #1e293b;
   --color-pamela-border: #ec4899;
   --color-pamela-text: #fce7f3;
 }
 
 body {
-  background:
+  background-color: #0f172a;
+  background-image:
     radial-gradient(
       circle at 20% 20%,
-      rgba(59, 130, 246, 0.08),
+      rgba(59, 130, 246, 0.1),
       transparent 40%
     ),
     radial-gradient(
       circle at 80% 30%,
-      rgba(236, 72, 153, 0.08),
+      rgba(236, 72, 153, 0.1),
       transparent 40%
     ),
-    #0f172a;
-
-  background-repeat: no-repeat;
-  background-size: cover;
+    radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size:
+    cover,
+    cover,
+    24px 24px;
   background-attachment: fixed;
-
+  color: white;
   font-family: "Courier New", monospace;
+}
+
+h1 {
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
