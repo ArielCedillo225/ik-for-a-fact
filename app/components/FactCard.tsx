@@ -1,5 +1,7 @@
 "use client";
 
+import { supabase } from "@/lib/supabase";
+
 import { useState, useRef, useEffect } from "react";
 
 type FactStatus =
@@ -42,6 +44,26 @@ export default function FactCard({ fact }: { fact: Fact }) {
 
   const isAriel = fact.created_by === "Ariel";
   const rotation = isAriel ? "-rotate-1" : "rotate-1";
+
+  const updateStatus = async (newStatus: FactStatus) => {
+    // 1. Cambio optimista en la UI
+    const previousStatus = status;
+    setStatus(newStatus);
+    setIsMenuOpen(false);
+
+    // 2. Llamada a Supabase
+    const { error } = await supabase
+      .from("facts")
+      .update({ status: newStatus })
+      .eq("id", fact.id);
+
+    if (error) {
+      console.error("Error updating status:", error.message);
+      // 3. Revertir si hay error
+      setStatus(previousStatus);
+      alert("No se pudo actualizar el estado en la base de datos.");
+    }
+  };
 
   const userStyles = isAriel
     ? "bg-[var(--color-ariel-bg)] border-[var(--color-ariel-border)] text-[var(--color-ariel-text)]"
@@ -183,13 +205,9 @@ export default function FactCard({ fact }: { fact: Fact }) {
               {statusOptions.map((opt) => (
                 <button
                   key={opt.id}
-                  onClick={() => {
-                    setStatus(opt.id);
-                    setIsMenuOpen(false);
-                    // Aquí iría la llamada al backend para actualizar el status
-                  }}
+                  onClick={() => updateStatus(opt.id)} // Llama a la nueva función
                   className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors
-                    ${status === opt.id ? "bg-white/20 text-white" : "text-white/40 hover:bg-white/10 hover:text-white"}`}
+      ${status === opt.id ? "bg-white/20 text-white" : "text-white/40 hover:bg-white/10 hover:text-white"}`}
                 >
                   <span className="w-4 flex justify-center">{opt.icon}</span>
                   <span>{opt.label}</span>
